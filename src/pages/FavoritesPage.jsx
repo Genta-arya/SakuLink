@@ -113,7 +113,7 @@ export default function FavoritesPage() {
         <Heart size={24} className="text-red-500 fill-red-500" />
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Favorit</h1>
-          <p className="text-sm text-gray-600 mt-1">{filteredLinks.length} dari {links.length} link favorit</p>
+         
         </div>
       </div>
 

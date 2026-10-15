@@ -28,7 +28,7 @@ export const CardDensityProvider = ({ children }) => {
       const userSnap = await getDoc(userRef);
       if (userSnap.exists()) {
         const userData = userSnap.data();
-        setCardDensity(userData.preferences?.cardDensity || 'comfortable');
+        setCardDensity(userData.preferences?.cardDensity || userData.settings?.cardDensity || 'comfortable');
       }
     } catch (error) {
       console.error('Gagal memuat card density:', error);
@@ -42,7 +42,7 @@ export const CardDensityProvider = ({ children }) => {
   }, [loadCardDensity]);
 
   return (
-    <CardDensityContext.Provider value={{ cardDensity, loading }}>
+    <CardDensityContext.Provider value={{ density: cardDensity, setDensity: setCardDensity, loading }}>
       {children}
     </CardDensityContext.Provider>
   );

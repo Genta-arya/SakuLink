@@ -18,6 +18,7 @@ import {
   Settings,
   LogOut,
   Search,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import nav from "./assets/nav.png";
@@ -34,11 +35,14 @@ export default function App() {
   const [collections, setCollections] = useState([]);
 
   const showSearchBar = location.pathname !== "/settings";
-  const isHomepage = location.pathname === "/";
+  const isListPage =
+    ["/", "/library", "/favorites", "/recent", "/collections"].includes(
+      location.pathname,
+    ) || location.pathname.startsWith("/collections/");
 
   useEffect(() => {
-    setShowSort(isHomepage);
-  }, [isHomepage, setShowSort]);
+    setShowSort(isListPage);
+  }, [location.pathname, setShowSort]);
 
   useEffect(() => {
     if (!user) return;
@@ -94,38 +98,43 @@ export default function App() {
         <div className="p-6 flex flex-col h-full">
           <img src={nav} alt="SakuLink Logo" className="mb-4" />
 
-<nav className="flex-1 space-y-2">
+          <nav className="flex-1 space-y-2">
             <Link
               to="/"
-              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
+              className={`flex items-center gap-3 px-4 py-2 rounded-md transition ${
+                location.pathname === '/'
+                  ? 'bg-indigo-50 text-indigo-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
             >
               <Layers size={20} />
               Koleksi
             </Link>
             <Link
-              to="/library"
-              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
-            >
-              <Library size={20} />
-              Library
-            </Link>
-            <Link
               to="/favorites"
-              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
+              className={`flex items-center gap-3 px-4 py-2 rounded-md transition ${
+                location.pathname === '/favorites'
+                  ? 'bg-indigo-50 text-indigo-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
             >
               <Heart size={20} />
               Favorit
             </Link>
-            <Link
-              to="/recent"
-              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
-            >
-              <Clock size={20} />
-              Terbaru
-            </Link>
           </nav>
 
           <div className="pt-4 border-t border-gray-200 space-y-2">
+            <Link
+              to="/settings"
+              className={`flex items-center gap-3 px-4 py-2 rounded-md transition ${
+                location.pathname === '/settings'
+                  ? 'bg-indigo-50 text-indigo-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Settings size={20} />
+              Pengaturan
+            </Link>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition"
@@ -140,35 +149,23 @@ export default function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden md:pb-0 pb-20">
         {/* Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6">
+        <header className="h-16 md:hidden bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6">
           <div className="md:hidden text-xl font-bold text-gray-900">
             <img src={nav} alt="SakuLink Logo" className="w-40" />
           </div>
 
-          <div className="flex-1 mx-4">
-            <div className="relative hidden md:block">
-              <Search
-                size={18}
-                className="absolute left-3 top-2.5 text-gray-400"
-              />
-              <input
-                type="text"
-                placeholder="Cari link..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full md:w-96 bg-gray-100 border-none rounded-full py-2 pl-10 pr-4 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 text-sm"
-              />
-            </div>
+          <div className="flex items-center gap-4">
+           
           </div>
 
-           <div className="flex items-center gap-4">
-             <button
-               onClick={() => navigate('/settings')}
-               className="text-gray-600 hover:text-gray-900"
-             >
-               <Settings size={20} />
-             </button>
-           </div>
+          <div className="md:hidden flex justify-end items-end gap-4">
+            <button
+              onClick={() => navigate("/settings")}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <Settings size={20} />
+            </button>
+          </div>
         </header>
 
         {/* Search Bar - Mobile & Desktop */}
@@ -182,6 +179,21 @@ export default function App() {
             </div>
           </div>
         </main>
+      </div>
+
+      {/* Desktop Floating Add Button */}
+      <div className="hidden md:block fixed bottom-6 right-6 z-30">
+        <button
+          onClick={openAddDialog}
+          aria-label="Tambah link"
+          className="group flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white ring-4 ring-white border-2 border-indigo-200 shadow-lg shadow-indigo-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/60 hover:scale-105 active:scale-95"
+        >
+          <Plus
+            size={28}
+            strokeWidth={2.5}
+            className="transition-transform duration-300 group-hover:rotate-90"
+          />
+        </button>
       </div>
 
       {/* Bottom Navigation - Mobile Only */}

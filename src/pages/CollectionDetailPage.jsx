@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 export default function CollectionDetailPage() {
   const { user } = useAuth();
   const { collectionId } = useParams();
-  const { searchQuery } = useSearch();
+  const { searchQuery, sortOrder } = useSearch();
   const navigate = useNavigate();
   const [collection, setCollection] = useState(null);
   const [links, setLinks] = useState([]);
@@ -123,6 +123,13 @@ export default function CollectionDetailPage() {
     );
   });
 
+  const sortedLinks = [...filteredLinks].sort((a, b) => {
+    if (!sortOrder || sortOrder === 'a-z') {
+      return a.title.localeCompare(b.title);
+    }
+    return b.title.localeCompare(a.title);
+  });
+
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
@@ -149,8 +156,8 @@ export default function CollectionDetailPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredLinks.map(link => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          {sortedLinks.map(link => (
             <LinkCard
               key={link.id}
               link={link}

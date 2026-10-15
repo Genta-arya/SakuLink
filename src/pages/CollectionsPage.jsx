@@ -24,7 +24,7 @@ const getCollectionIcon = (iconName) => {
 
 export default function CollectionsPage() {
   const { user } = useAuth();
-  const { searchQuery } = useSearch();
+  const { searchQuery, sortOrder } = useSearch();
   const navigate = useNavigate();
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +35,16 @@ export default function CollectionsPage() {
   const [collectionLinkCounts, setCollectionLinkCounts] = useState({});
   const [saving, setSaving] = useState(false);
 const [anchorEl, setAnchorEl] = useState(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (anchorEl && !e.target.closest(`[data-collection-id="${anchorEl}"]`) && !e.target.closest('.collection-menu-dropdown')) {
+        setAnchorEl(null);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [anchorEl]);
 
   const loadCollections = useCallback(async () => {
     if (!user) return;
@@ -153,23 +163,32 @@ const handleSaveCollection = async (collectionData) => {
     );
   });
 
+  const sortedCollections = [...filteredCollections].sort((a, b) => {
+    if (!sortOrder || sortOrder === 'a-z') {
+      return a.name.localeCompare(b.name);
+    }
+    return b.name.localeCompare(a.name);
+  });
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <div>
+        <div className="flex items-center gap-3">
+          {/* icon yang cocok */}
+          <Folder size={24} className="text-purple-600" />
           <h1 className="text-2xl font-bold text-gray-900">Koleksi</h1>
-          <p className="text-sm text-gray-600 mt-1">{filteredCollections.length} dari {collections.length} koleksi</p>
+          
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm"
+          className="flex items-center text-sm gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm"
         >
           <Plus size={18} />
           Buat Koleksi
         </button>
       </div>
 
-      {filteredCollections.length === 0 ? (
+      {sortedCollections.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
           <p className="text-gray-500 mb-4">{searchQuery ? 'Tidak ada koleksi yang cocok' : 'Belum ada koleksi'}</p>
           {!searchQuery && (
@@ -182,76 +201,83 @@ const handleSaveCollection = async (collectionData) => {
           )}
         </div>
        ) : (
-         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
-           {filteredCollections.map(collection => {
+         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2">
+           {sortedCollections.map(collection => {
              const IconComponent = getCollectionIcon(collection.icon);
              const isCustomUrl = collection.icon && (collection.icon.startsWith('http://') || collection.icon.startsWith('https://'));
-             return (
-               <motion.div
-                 key={collection.id}
-                 initial={{ opacity: 0, y: 10 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 exit={{ opacity: 0, y: -10 }}
-                 className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition shadow-sm flex flex-col justify-between relative"
-                 onClick={() => navigate(`/collections/${collection.id}`)}
-               >
-                 <div>
-                   <div className="flex items-center justify-between mb-3">
-                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                       <div
-                         className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
-                         style={{ backgroundColor: collection.color || '#8B5CF6' }}
-                       >
-                         {isCustomUrl ? (
-                           <img src={collection.icon} alt={collection.name} className="w-6 h-6 object-contain" />
-                         ) : (
-                           <IconComponent size={20} className="text-white" />
-                         )}
-                       </div>
-                       <h2 className="text-lg font-semibold text-gray-900 truncate">{collection.name}</h2>
-                     </div>
-                     <div>
-                       <button
-                         onClick={() => {
-                           setAnchorEl(anchorEl === collection.id ? null : collection.id);
-                         }}
-                         className="p-1 text-gray-500 hover:bg-gray-100 rounded transition"
-                         title="More"
-                       >
-                         <MoreHorizontal size={16} />
-                       </button>
-                     </div>
-                   </div>
-                   <p className="text-sm text-gray-600 line-clamp-3">{collection.description || 'Tidak ada deskripsi.'}</p>
-                 </div>
-                 <div className="mt-4 pt-3 border-t border-gray-100">
-                   <span className="text-sm text-gray-500">{collectionLinkCounts[collection.id] || 0} link</span>
-                 </div>
-                 {anchorEl === collection.id && (
-                   <div className="absolute top-0 right-0 mt-2 mr-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-20">
-                     <div className="py-1">
-                       <button
-                         onClick={() => {
-                           setAnchorEl(null);
-                           openEditModal(collection);
-                         }}
-                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                       >
-                         Edit
-                       </button>
-                       <button
-                         onClick={() => {
-                           setAnchorEl(null);
-                           openDeleteModal(collection.id);
-                         }}
-                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                       >
-                         Delete
-                       </button>
-                     </div>
-                   </div>
-                 )}
-               </motion.div>
+              return (
+                <motion.div
+                  key={collection.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition shadow-sm flex flex-col justify-between relative"
+                  onClick={() => {
+                    navigate(`/collections/${collection.id}`);
+                  }}
+                >
+<div>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+                          style={{ backgroundColor: collection.color || '#8B5CF6' }}
+                        >
+                          {isCustomUrl ? (
+                            <img src={collection.icon} alt={collection.name} className="w-6 h-6 object-contain rounded" />
+                          ) : (
+                            <IconComponent size={20} className="text-white" />
+                          )}
+                        </div>
+                        <h2 className="text-sm font-semibold text-gray-900 leading-tight break-words">{collection.name}</h2>
+                      </div>
+                      <div data-collection-id={collection.id}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAnchorEl(anchorEl === collection.id ? null : collection.id);
+                          }}
+                          className="p-1  text-gray-500 hover:bg-gray-100 rounded transition"
+                          title="More"
+                        >
+                          <MoreHorizontal size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-auto pt-3 border-t border-gray-100">
+                    <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full">{collectionLinkCounts[collection.id] || 0} link</span>
+                  </div>
+                  {anchorEl === collection.id && (
+                    <div 
+                      className="absolute top-0 right-0 mt-2 mr-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-20 collection-menu-dropdown"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="py-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAnchorEl(null);
+                            openEditModal(collection);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAnchorEl(null);
+                            openDeleteModal(collection.id);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
              );
            })}
          </div>
@@ -353,7 +379,7 @@ const CollectionModal = ({ isOpen, onClose, onSave, collection, loading }) => {
         className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-screen overflow-y-auto"
       >
         <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-          <h2 className="text-lg font-semibold text-gray-900">{collection ? 'Edit Koleksi' : 'Buat Koleksi Baru'}</h2>
+          <h2 className="text-base font-semibold text-gray-900">{collection ? 'Edit Koleksi' : 'Buat Koleksi Baru'}</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded transition"><X size={20} className="text-gray-500" /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">

@@ -158,7 +158,7 @@ export default function EditLinkDialog({ isOpen, onClose, onSave, link }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 disabled={collectionsLoading}
               >
-                <option value="">Tanpa Koleksi</option>
+                
                 {collections.map(col => (
                   <option key={col.id} value={col.id}>{col.name}</option>
                 ))}

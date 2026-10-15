@@ -38,9 +38,14 @@ export default function BottomNav({ onAddClick }) {
         <div className="w-full flex items-center justify-center h-full">
           <button
             onClick={onAddClick}
-            className="absolute -top-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg transition transform hover:scale-105 active:scale-95"
+            aria-label="Tambah link"
+            className="group absolute -top-6 flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white ring-4 ring-white border-2 border-indigo-200 shadow-lg shadow-indigo-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/60 hover:scale-105 active:scale-95"
           >
-            <Plus size={28} strokeWidth={2.5} />
+            <Plus
+              size={30}
+              strokeWidth={2.5}
+              className="transition-transform duration-300 group-hover:rotate-90"
+            />
           </button>
         </div>
 

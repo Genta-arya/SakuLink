@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { normalizeUrl, getDomain, getFaviconUrl } from '../utils/url';
+import { encryptUrl, decryptUrl } from '../utils/encryption';
 
 export const linksService = {
   /**
@@ -25,8 +26,10 @@ export const linksService = {
     const domain = getDomain(linkData.url);
     const faviconUrl = linkData.faviconUrl || getFaviconUrl(linkData.url);
 
+    const encryptedUrl = await encryptUrl(linkData.url, userId);
+
     const newLink = {
-      url: linkData.url,
+      url: encryptedUrl,
       normalizedUrl,
       title: linkData.title || domain,
       description: linkData.description || '',
@@ -45,7 +48,9 @@ export const linksService = {
     };
 
     const docRef = await addDoc(linksRef, newLink);
-    return { id: docRef.id, ...newLink };
+    
+    const decryptedUrl = await decryptUrl(encryptedUrl, userId);
+    return { id: docRef.id, ...newLink, url: decryptedUrl };
   },
 
   /**
@@ -70,10 +75,19 @@ export const linksService = {
     const q = query(linksRef, orderBy(sortField, sortDirection));
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const links = await Promise.all(
+      snapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data();
+        const decryptedUrl = await decryptUrl(data.url, userId);
+        return {
+          id: docSnap.id,
+          ...data,
+          url: decryptedUrl,
+        };
+      })
+    );
+
+    return links;
   },
 
   /**
@@ -87,9 +101,13 @@ export const linksService = {
       throw new Error('Link tidak ditemukan');
     }
 
+    const data = snapshot.data();
+    const decryptedUrl = await decryptUrl(data.url, userId);
+
     return {
       id: snapshot.id,
-      ...snapshot.data(),
+      ...data,
+      url: decryptedUrl,
     };
   },
 
@@ -106,9 +124,12 @@ export const linksService = {
       return null;
     }
 
+    const data = snapshot.docs[0].data();
+    const decryptedUrl = await decryptUrl(data.url, userId);
     return {
       id: snapshot.docs[0].id,
-      ...snapshot.docs[0].data(),
+      ...data,
+      url: decryptedUrl,
     };
   },
 
@@ -122,6 +143,10 @@ export const linksService = {
       ...updates,
       updatedAt: Timestamp.now(),
     };
+
+    if (updates.url) {
+      updateData.url = await encryptUrl(updates.url, userId);
+    }
 
     await updateDoc(linkRef, updateData);
     return await this.getLink(userId, linkId);
@@ -153,10 +178,19 @@ export const linksService = {
     const q = query(linksRef, where('collectionId', '==', collectionId));
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const links = await Promise.all(
+      snapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data();
+        const decryptedUrl = await decryptUrl(data.url, userId);
+        return {
+          id: docSnap.id,
+          ...data,
+          url: decryptedUrl,
+        };
+      })
+    );
+
+    return links;
   },
 
   /**
@@ -167,9 +201,18 @@ export const linksService = {
     const q = query(linksRef, where('isFavorite', '==', true));
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const links = await Promise.all(
+      snapshot.docs.map(async (docSnap) => {
+        const data = docSnap.data();
+        const decryptedUrl = await decryptUrl(data.url, userId);
+        return {
+          id: docSnap.id,
+          ...data,
+          url: decryptedUrl,
+        };
+      })
+    );
+
+    return links;
   },
 };
