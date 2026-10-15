@@ -307,7 +307,7 @@ export default function SettingsPage() {
         <button
           onClick={handleSavePreferences}
           disabled={isSaving}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-lg hover:scale-105 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSaving ? (
             <>
