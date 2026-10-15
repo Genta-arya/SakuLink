@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSearch } from '../contexts/SearchContext';
 import { linksService } from '../services/links.service';
+import { collectionsService } from '../services/collections.service';
 import LinkCard from '../components/links/LinkCard';
 import QuickAddDialog from '../components/links/QuickAddDialog';
 import EditLinkDialog from '../components/links/EditLinkDialog';
@@ -20,6 +21,7 @@ export default function LibraryPage() {
   const [editingLink, setEditingLink] = useState(null);
   const [deletingLinkId, setDeletingLinkId] = useState(null);
   const [duplicateLink, setDuplicateLink] = useState(null);
+  const [collections, setCollections] = useState([]);
 
   const loadLinks = useCallback(async () => {
     if (!user) return;
@@ -36,9 +38,21 @@ export default function LibraryPage() {
     }
   }, [user]);
 
+  const loadCollections = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await collectionsService.getCollections(user.uid);
+      setCollections(data);
+    } catch (error) {
+      console.error('Gagal memuat koleksi:', error);
+      toast.error('Gagal memuat koleksi');
+    }
+  }, [user]);
+
   useEffect(() => {
     loadLinks();
-  }, [loadLinks]);
+    loadCollections();
+  }, [loadLinks, loadCollections]);
 
   const handleSaveLink = async (linkData) => {
     const duplicate = await linksService.checkDuplicate(user.uid, linkData.url);
@@ -186,6 +200,7 @@ export default function LibraryPage() {
         onSave={handleSaveLink}
         isDuplicate={!!duplicateLink}
         duplicateLink={duplicateLink}
+        collections={collections}
       />
 
       <EditLinkDialog

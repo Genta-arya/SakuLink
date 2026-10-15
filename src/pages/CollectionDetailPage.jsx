@@ -127,7 +127,7 @@ export default function CollectionDetailPage() {
     <div>
       <div className="flex items-center gap-3 mb-6">
         <button
-          onClick={() => navigate('/collections')}
+          onClick={() => navigate('/')}
           className="p-2 hover:bg-gray-100 rounded-md transition"
           title="Kembali"
         >

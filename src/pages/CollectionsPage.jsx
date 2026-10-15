@@ -3,11 +3,24 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSearch } from '../contexts/SearchContext';
 import { collectionsService } from '../services/collections.service';
 import { linksService } from '../services/links.service';
-import { Loader, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Loader, Plus, Edit2, Trash2, X, Folder, BookOpen, Star, Briefcase, Heart, Code, Music, Camera, Plane, Coffee, Gamepad2, BookMarked, MoreHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import ConfirmModal from '../components/feedback/ConfirmModal';
 import { useNavigate } from 'react-router-dom';
+
+const ICON_MAP = {
+  Folder, Book: BookOpen, Star, Briefcase, Heart, Code,
+  Music, Camera, Plane, Coffee, Gamepad: Gamepad2, BookMarked,
+};
+
+const getCollectionIcon = (iconName) => {
+  if (!iconName) return Folder;
+  if (iconName.startsWith('http://') || iconName.startsWith('https://')) {
+    return null;
+  }
+  return ICON_MAP[iconName] || Folder;
+};
 
 export default function CollectionsPage() {
   const { user } = useAuth();
@@ -20,6 +33,8 @@ export default function CollectionsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingCollectionId, setDeletingCollectionId] = useState(null);
   const [collectionLinkCounts, setCollectionLinkCounts] = useState({});
+  const [saving, setSaving] = useState(false);
+const [anchorEl, setAnchorEl] = useState(null);
 
   const loadCollections = useCallback(async () => {
     if (!user) return;
@@ -46,38 +61,51 @@ export default function CollectionsPage() {
     loadCollections();
   }, [loadCollections]);
 
-  const handleSaveCollection = async (collectionData) => {
-    if (!collectionData.name) {
-      toast.error('Nama koleksi tidak boleh kosong.');
-      return;
-    }
+const handleSaveCollection = async (collectionData) => {
+  if (!collectionData.name) {
+    toast.error('Nama koleksi tidak boleh kosong.');
+    return;
+  }
 
-    try {
-      if (editingCollection) {
-        const updatedCollection = await collectionsService.updateCollection(
-          user.uid,
-          editingCollection.id,
-          { name: collectionData.name, description: collectionData.description || '' }
-        );
-        setCollections(collections.map(c => c.id === editingCollection.id ? updatedCollection : c));
-        toast.success('Koleksi berhasil diperbarui');
-      } else {
-        const nameExists = await collectionsService.checkCollectionNameExists(user.uid, collectionData.name);
-        if (nameExists) {
-          toast.error('Nama koleksi sudah ada.');
-          return;
+  setSaving(true);
+  try {
+    if (editingCollection) {
+      const updatedCollection = await collectionsService.updateCollection(
+        user.uid,
+        editingCollection.id,
+        { 
+          name: collectionData.name, 
+          description: collectionData.description || '',
+          icon: collectionData.icon || editingCollection.icon,
+          color: collectionData.color || editingCollection.color 
         }
-        const newCollection = await collectionsService.createCollection(user.uid, { name: collectionData.name, description: collectionData.description || '' });
-        setCollections([newCollection, ...collections]);
-        toast.success('Koleksi berhasil dibuat');
+      );
+      setCollections(collections.map(c => c.id === editingCollection.id ? updatedCollection : c));
+      toast.success('Koleksi berhasil diperbarui');
+    } else {
+      const nameExists = await collectionsService.checkCollectionNameExists(user.uid, collectionData.name);
+      if (nameExists) {
+        toast.error('Nama koleksi sudah ada.');
+        return;
       }
-      setIsAddModalOpen(false);
-      setEditingCollection(null);
-    } catch (error) {
-      console.error('Gagal menyimpan koleksi:', error);
-      toast.error('Gagal menyimpan koleksi');
+      const newCollection = await collectionsService.createCollection(user.uid, { 
+        name: collectionData.name, 
+        description: collectionData.description || '',
+        icon: collectionData.icon,
+        color: collectionData.color 
+      });
+      setCollections([newCollection, ...collections]);
+      toast.success('Koleksi berhasil dibuat');
     }
-  };
+    setIsAddModalOpen(false);
+    setEditingCollection(null);
+  } catch (error) {
+    console.error('Gagal menyimpan koleksi:', error);
+    toast.error('Gagal menyimpan koleksi');
+  } finally {
+    setSaving(false);
+  }
+};
 
   const handleDeleteCollection = async () => {
     try {
@@ -153,43 +181,81 @@ export default function CollectionsPage() {
             </button>
           )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCollections.map(collection => (
-            <motion.div
-              key={collection.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition shadow-sm flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-gray-900 truncate">{collection.name}</h2>
-                  <div className="flex gap-1">
-                    <button onClick={() => openEditModal(collection)} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded transition" title="Edit">
-                      <Edit2 size={16} />
-                    </button>
-                    <button onClick={() => openDeleteModal(collection.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition" title="Hapus">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 line-clamp-3">{collection.description || 'Tidak ada deskripsi.'}</p>
-              </div>
-              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-sm text-gray-500">{collectionLinkCounts[collection.id] || 0} link</span>
-                <button 
-                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                  onClick={() => navigate(`/collections/${collection.id}`)}
-                >
-                  Lihat →
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
+       ) : (
+         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+           {filteredCollections.map(collection => {
+             const IconComponent = getCollectionIcon(collection.icon);
+             const isCustomUrl = collection.icon && (collection.icon.startsWith('http://') || collection.icon.startsWith('https://'));
+             return (
+               <motion.div
+                 key={collection.id}
+                 initial={{ opacity: 0, y: 10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 exit={{ opacity: 0, y: -10 }}
+                 className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition shadow-sm flex flex-col justify-between relative"
+                 onClick={() => navigate(`/collections/${collection.id}`)}
+               >
+                 <div>
+                   <div className="flex items-center justify-between mb-3">
+                     <div className="flex items-center gap-3 flex-1 min-w-0">
+                       <div
+                         className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden"
+                         style={{ backgroundColor: collection.color || '#8B5CF6' }}
+                       >
+                         {isCustomUrl ? (
+                           <img src={collection.icon} alt={collection.name} className="w-6 h-6 object-contain" />
+                         ) : (
+                           <IconComponent size={20} className="text-white" />
+                         )}
+                       </div>
+                       <h2 className="text-lg font-semibold text-gray-900 truncate">{collection.name}</h2>
+                     </div>
+                     <div>
+                       <button
+                         onClick={() => {
+                           setAnchorEl(anchorEl === collection.id ? null : collection.id);
+                         }}
+                         className="p-1 text-gray-500 hover:bg-gray-100 rounded transition"
+                         title="More"
+                       >
+                         <MoreHorizontal size={16} />
+                       </button>
+                     </div>
+                   </div>
+                   <p className="text-sm text-gray-600 line-clamp-3">{collection.description || 'Tidak ada deskripsi.'}</p>
+                 </div>
+                 <div className="mt-4 pt-3 border-t border-gray-100">
+                   <span className="text-sm text-gray-500">{collectionLinkCounts[collection.id] || 0} link</span>
+                 </div>
+                 {anchorEl === collection.id && (
+                   <div className="absolute top-0 right-0 mt-2 mr-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-20">
+                     <div className="py-1">
+                       <button
+                         onClick={() => {
+                           setAnchorEl(null);
+                           openEditModal(collection);
+                         }}
+                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                       >
+                         Edit
+                       </button>
+                       <button
+                         onClick={() => {
+                           setAnchorEl(null);
+                           openDeleteModal(collection.id);
+                         }}
+                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                       >
+                         Delete
+                       </button>
+                     </div>
+                   </div>
+                 )}
+               </motion.div>
+             );
+           })}
+         </div>
+       )}
 
       {/* Add/Edit Collection Modal */}
       <CollectionModal 
@@ -197,6 +263,7 @@ export default function CollectionsPage() {
         onClose={closeAddModal}
         onSave={handleSaveCollection}
         collection={editingCollection}
+        loading={saving}
       />
 
       {/* Delete Confirmation Modal */}
@@ -218,23 +285,53 @@ export default function CollectionsPage() {
 }
 
 // Modal component
-const CollectionModal = ({ isOpen, onClose, onSave, collection }) => {
+const ICONS = [
+  { name: 'Folder', icon: Folder },
+  { name: 'Book', icon: BookOpen },
+  { name: 'Star', icon: Star },
+  { name: 'Briefcase', icon: Briefcase },
+  { name: 'Heart', icon: Heart },
+  { name: 'Code', icon: Code },
+  { name: 'Music', icon: Music },
+  { name: 'Camera', icon: Camera },
+  { name: 'Plane', icon: Plane },
+  { name: 'Coffee', icon: Coffee },
+  { name: 'Gamepad', icon: Gamepad2 },
+  { name: 'BookMarked', icon: BookMarked },
+];
+
+const COLORS = [
+  '#8B5CF6', '#EF4444', '#10B981', '#F59E0B', '#3B82F6',
+  '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16',
+];
+
+const CollectionModal = ({ isOpen, onClose, onSave, collection, loading }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState('');
+  const [selectedColor, setSelectedColor] = useState('#8B5CF6');
+  const [customIconUrl, setCustomIconUrl] = useState('');
 
   useEffect(() => {
     if (collection) {
       setName(collection.name || '');
       setDescription(collection.description || '');
+      setSelectedIcon(collection.icon || '');
+      setSelectedColor(collection.color || '#8B5CF6');
+      setCustomIconUrl('');
     } else {
       setName('');
       setDescription('');
+      setSelectedIcon('');
+      setSelectedColor('#8B5CF6');
+      setCustomIconUrl('');
     }
   }, [collection, isOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ name, description });
+    const icon = customIconUrl.trim() ? customIconUrl.trim() : selectedIcon;
+    onSave({ name, description, icon: icon, color: selectedColor });
   };
 
   if (!isOpen) return null;
@@ -283,9 +380,57 @@ const CollectionModal = ({ isOpen, onClose, onSave, collection }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Icon atau URL Gambar</label>
+            <input
+              type="text"
+              value={customIconUrl}
+              onChange={(e) => setCustomIconUrl(e.target.value)}
+              placeholder="https://example.com/icon.png"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
+            />
+            <div className="grid grid-cols-6 gap-2">
+              {ICONS.map(({ name, icon: Icon }) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setSelectedIcon(name)}
+                  className={`flex items-center justify-center p-2 rounded-lg border-2 transition hover:bg-gray-50 ${
+                    selectedIcon === name ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
+                  }`}
+                  title={name}
+                >
+                  <Icon size={20} className={selectedIcon === name ? 'text-indigo-600' : 'text-gray-600'} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Pilih Warna</label>
+            <div className="flex gap-2 flex-wrap">
+              {COLORS.map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setSelectedColor(color)}
+                  className={`w-8 h-8 rounded-full border-2 transition hover:scale-110 ${
+                    selectedColor === color ? 'border-gray-900' : 'border-transparent'
+                  }`}
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
+
           <div className="flex gap-3 pt-4">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition font-medium text-sm">Batal</button>
-            <button type="submit" className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition font-medium text-sm">{collection ? 'Simpan' : 'Buat Koleksi'}</button>
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition font-medium text-sm" disabled={loading}>Batal</button>
+            <button type="submit" className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition font-medium text-sm disabled:bg-indigo-400 disabled:cursor-not-allowed flex items-center justify-center gap-2" disabled={loading}>
+              {loading && <Loader size={16} className="animate-spin" />}
+              {collection ? 'Simpan' : 'Buat Koleksi'}
+            </button>
           </div>
         </form>
       </motion.div>

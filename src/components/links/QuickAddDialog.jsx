@@ -3,13 +3,14 @@ import { X, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isValidUrl } from '../../utils/url';
 
-export default function QuickAddDialog({ isOpen, onClose, onSave, isDuplicate, duplicateLink }) {
+export default function QuickAddDialog({ isOpen, onClose, onSave, collections, isDuplicate, duplicateLink }) {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedCollection, setSelectedCollection] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,12 +37,14 @@ export default function QuickAddDialog({ isOpen, onClose, onSave, isDuplicate, d
           .split(',')
           .map(t => t.trim())
           .filter(t => t),
+        collectionId: selectedCollection || null,
       });
 
       setUrl('');
       setTitle('');
       setDescription('');
       setTags('');
+      setSelectedCollection('');
       onClose();
     } catch (err) {
       setError(err.message);
@@ -160,6 +163,32 @@ export default function QuickAddDialog({ isOpen, onClose, onSave, isDuplicate, d
                 disabled={isLoading}
               />
             </div>
+
+            {/* Collection selector dropdown */}
+            {collections && collections.length > 0 && (
+              <div>
+                <label htmlFor="collection" className="block text-sm font-medium text-gray-700 mb-1">
+                  Koleksi *
+                </label>
+                <select
+                  id="collection"
+                  value={selectedCollection}
+                  onChange={(e) => setSelectedCollection(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={isLoading}
+                >
+                  <option value="">-- Pilih koleksi --</option>
+                  {collections.map(collection => (
+                    <option
+                      key={collection.id}
+                      value={collection.id}
+                    >
+                      {collection.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <button

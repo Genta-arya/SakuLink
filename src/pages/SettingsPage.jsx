@@ -5,6 +5,7 @@ import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { LogOut, Loader, User, Mail, Settings, Save } from 'lucide-react';
 import { authService } from '../services/auth.service';
+import { getAuthErrorMessage } from '../utils/authErrors';
 import { useNavigate } from 'react-router-dom';
 
 export default function SettingsPage() {
@@ -65,16 +66,16 @@ export default function SettingsPage() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await authService.logout();
-      navigate('/login');
-     
-    } catch (error) {
-      console.error('Gagal logout:', error);
-      toast.error('Gagal keluar akun');
-    }
-  };
+   const handleLogout = async () => {
+     try {
+       await authService.logout();
+       navigate('/login');
+      
+     } catch (error) {
+       console.error('Gagal logout:', error);
+       toast.error(getAuthErrorMessage(error));
+     }
+   };
 
   if (loading) {
     return (

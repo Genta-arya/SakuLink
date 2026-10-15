@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authService } from "../services/auth.service";
-import { UserPlus } from "lucide-react";
+import { getAuthErrorMessage } from "../utils/authErrors";
+import { UserPlus, Mail, User, Lock, Eye, EyeOff } from "lucide-react";
 import nav from "../assets/nav.png";
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -9,6 +10,7 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -20,7 +22,7 @@ export default function RegisterPage() {
       await authService.register(email, password, displayName);
       navigate("/");
     } catch (err) {
-      setError(err.message || "Gagal mendaftar. Coba lagi.");
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -50,17 +52,19 @@ export default function RegisterPage() {
             >
               Nama
             </label>
-            <input
-              id="displayName"
-              type="text"
-              placeholder="Masukkan nama Anda"
-              autoComplete="name"
-              
-              required
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
+            <div className="relative mt-1">
+              <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                id="displayName"
+                type="text"
+                placeholder="Masukkan nama Anda"
+                autoComplete="name"
+                required
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
           </div>
 
           <div>
@@ -70,37 +74,51 @@ export default function RegisterPage() {
             >
               Email
             </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="Masukkan email Anda"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
+            <div className="relative mt-1">
+              <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                id="email"
+                type="email"
+                placeholder="Masukkan email Anda"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Masukkan password Anda"
-              required
-              minLength="6"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            />
-            <p className="mt-1 text-xs text-gray-500">Minimal 6 karakter</p>
-          </div>
+             <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Password
+              </label>
+              <div className="relative mt-1">
+                <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  id="password"
+                  type={passwordVisible ? 'text' : 'password'}
+                  placeholder="Masukkan password Anda"
+                  required
+                  minLength="6"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPasswordVisible(!passwordVisible)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={passwordVisible ? "Sembunyikan password" : "Tampilkan password"}
+                >
+                  {passwordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Minimal 6 karakter</p>
+            </div>
 
           <button
             type="submit"

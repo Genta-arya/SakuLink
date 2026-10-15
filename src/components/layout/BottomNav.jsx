@@ -1,14 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Library, Heart, Layers, Settings, Plus } from 'lucide-react';
+import { Heart, Layers, Plus } from 'lucide-react';
 
 const leftNavItems = [
-  { icon: Library, label: 'Semua', path: '/' },
-  { icon: Heart, label: 'Favorit', path: '/favorites' },
+  { icon: Layers, label: 'Koleksi', path: '/' },
 ];
 
 const rightNavItems = [
-  { icon: Layers, label: 'Koleksi', path: '/collections' },
-  { icon: Settings, label: 'Pengaturan', path: '/settings' },
+  { icon: Heart, label: 'Favorit', path: '/favorites' },
 ];
 
 export default function BottomNav({ onAddClick }) {

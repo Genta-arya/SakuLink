@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { authService } from "./services/auth.service";
 import { Toaster } from "sonner";
 import BottomNav from "./components/layout/BottomNav";
@@ -8,6 +8,7 @@ import QuickAddDialog from "./components/links/QuickAddDialog";
 import { useSearch } from "./contexts/SearchContext";
 import { useAddLinkDialog } from "./contexts/AddLinkDialogContext";
 import { linksService } from "./services/links.service";
+import { collectionsService } from "./services/collections.service";
 import { useAuth } from "./contexts/AuthContext";
 import {
   Library,
@@ -30,6 +31,7 @@ export default function App() {
     close: closeAddDialog,
   } = useAddLinkDialog();
   const { user } = useAuth();
+  const [collections, setCollections] = useState([]);
 
   const showSearchBar = location.pathname !== "/settings";
   const isHomepage = location.pathname === "/";
@@ -37,6 +39,20 @@ export default function App() {
   useEffect(() => {
     setShowSort(isHomepage);
   }, [isHomepage, setShowSort]);
+
+  useEffect(() => {
+    if (!user) return;
+    const loadCollections = async () => {
+      try {
+        const data = await collectionsService.getCollections(user.uid);
+        setCollections(data);
+      } catch (error) {
+        console.error("Gagal memuat koleksi:", error);
+        toast.error("Gagal memuat koleksi");
+      }
+    };
+    loadCollections();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -78,13 +94,20 @@ export default function App() {
         <div className="p-6 flex flex-col h-full">
           <img src={nav} alt="SakuLink Logo" className="mb-4" />
 
-          <nav className="flex-1 space-y-2">
+<nav className="flex-1 space-y-2">
             <Link
               to="/"
               className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
             >
+              <Layers size={20} />
+              Koleksi
+            </Link>
+            <Link
+              to="/library"
+              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
+            >
               <Library size={20} />
-              Semua Link
+              Library
             </Link>
             <Link
               to="/favorites"
@@ -100,23 +123,9 @@ export default function App() {
               <Clock size={20} />
               Terbaru
             </Link>
-            <Link
-              to="/collections"
-              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
-            >
-              <Layers size={20} />
-              Koleksi
-            </Link>
           </nav>
 
           <div className="pt-4 border-t border-gray-200 space-y-2">
-            <Link
-              to="/settings"
-              className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition"
-            >
-              <Settings size={20} />
-              Pengaturan
-            </Link>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition"
@@ -152,7 +161,14 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4"></div>
+           <div className="flex items-center gap-4">
+             <button
+               onClick={() => navigate('/settings')}
+               className="text-gray-600 hover:text-gray-900"
+             >
+               <Settings size={20} />
+             </button>
+           </div>
         </header>
 
         {/* Search Bar - Mobile & Desktop */}
@@ -176,6 +192,7 @@ export default function App() {
         isOpen={isOpen}
         onClose={closeAddDialog}
         onSave={handleSaveLink}
+        collections={collections}
       />
     </div>
   );

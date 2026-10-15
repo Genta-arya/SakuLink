@@ -29,8 +29,8 @@ const router = createBrowserRouter([
     path: '/',
     element: <ProtectedRoute><App /></ProtectedRoute>,
     children: [
-      { index: true, element: <LibraryPage /> },
-      { path: 'collections', element: <CollectionsPage /> },
+      { index: true, element: <CollectionsPage /> },
+      { path: 'library', element: <LibraryPage /> },
       { path: 'collections/:collectionId', element: <CollectionDetailPage /> },
       { path: 'favorites', element: <FavoritesPage /> },
       { path: 'recent', element: <RecentPage /> },

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { authService } from "../services/auth.service";
+import { getAuthErrorMessage } from "../utils/authErrors";
 import { Mail } from "lucide-react";
 import nav from "../assets/nav.png";
 export default function ForgotPasswordPage() {
@@ -19,7 +20,7 @@ export default function ForgotPasswordPage() {
       await authService.resetPassword(email);
       setSuccess(true);
     } catch (err) {
-      setError(err.message || "Gagal mengirim email reset password.");
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
