@@ -6,8 +6,6 @@ import { linksService } from "../services/links.service";
 import {
   Loader,
   Plus,
-  Edit2,
-  Trash2,
   X,
   Folder,
   BookOpen,
@@ -26,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import ConfirmModal from "../components/feedback/ConfirmModal";
+import BottomSheet from "../components/feedback/BottomSheet";
 import { useNavigate } from "react-router-dom";
 
 const ICON_MAP = {
@@ -85,7 +84,6 @@ export default function CollectionsPage() {
       setLoading(true);
       const data = await collectionsService.getCollections(user.uid);
       setCollections(data);
-      // Load link counts for each collection
       const counts = {};
       for (const col of data) {
         const links = await linksService.getLinksByCollection(user.uid, col.id);
@@ -218,16 +216,15 @@ export default function CollectionsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          {/* icon yang cocok */}
           <Folder size={24} className="text-purple-600" />
           <h1 className="text-2xl font-bold text-gray-900">Koleksi</h1>
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center text-sm gap-2 bg-gradient-to-br hover:scale-105  from-indigo-500 to-violet-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm"
+          className="flex items-center text-sm gap-2 bg-gradient-to-br hover:scale-105 from-indigo-500 to-violet-600 text-white px-4 py-2 rounded-lg transition shadow-sm"
         >
           <Plus size={18} />
-         Koleksi
+          Koleksi
         </button>
       </div>
 
@@ -282,61 +279,61 @@ export default function CollectionsPage() {
                         ) : (
                           <IconComponent size={20} className="text-white" />
                         )}
-                      </div>
-                      <h2 className="text-sm font-semibold text-gray-900 leading-tight break-words">
-                        {collection.name}
-                      </h2>
-                    </div>
-                    <div data-collection-id={collection.id}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAnchorEl(
-                            anchorEl === collection.id ? null : collection.id,
-                          );
-                        }}
-                        className="p-1  text-gray-500 hover:bg-gray-100 rounded transition"
-                        title="More"
-                      >
-                        <MoreHorizontal size={16} />
-                      </button>
-                    </div>
-                  </div>
+</div>
+                  <h2 className="text-sm font-semibold text-gray-900 leading-tight break-words">
+                    {collection.name}
+                  </h2>
                 </div>
-                <div className="mt-auto pt-3 border-t border-gray-100">
+                </div>
+                </div>
+                <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
                   <span className="inline-block bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full">
                     {collectionLinkCounts[collection.id] || 0} link
                   </span>
-                </div>
-                {anchorEl === collection.id && (
-                  <div
-                    className="absolute top-0 -right-4  mt-2 mr-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-20 collection-menu-dropdown"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="py-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAnchorEl(null);
-                          openEditModal(collection);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  <div data-collection-id={collection.id} className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAnchorEl(
+                          anchorEl === collection.id ? null : collection.id,
+                        );
+                      }}
+                      className="p-1 text-gray-500 hover:bg-gray-100 rounded transition"
+                      title="More"
+                    >
+                      <MoreHorizontal size={16} />
+                    </button>
+                    {anchorEl === collection.id && (
+                      <div
+                        className="absolute bottom-full right-0 mb-2 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-20 collection-menu-dropdown"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        Ubah
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAnchorEl(null);
-                          openDeleteModal(collection.id);
-                        }}
-                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Hapus
-                      </button>
-                    </div>
+                        <div className="py-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAnchorEl(null);
+                              openEditModal(collection);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Ubah
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAnchorEl(null);
+                              openDeleteModal(collection.id);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </motion.div>
             );
           })}
@@ -430,147 +427,139 @@ const CollectionModal = ({ isOpen, onClose, onSave, collection, loading }) => {
 
   if (!isOpen) return null;
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-screen overflow-y-auto"
+  const actions = (
+    <>
+      <button
+        type="button"
+        form="collection-form"
+        className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition font-medium text-sm disabled:bg-indigo-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        disabled={loading}
       >
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-          <h2 className="text-base font-semibold text-gray-900">
-            {collection ? "Edit Koleksi" : "Buat Koleksi Baru"}
-          </h2>
+        {loading && <Loader size={16} className="animate-spin" />}
+        {collection ? "Simpan" : "Buat Koleksi"}
+      </button>
+    </>
+  );
+
+  return (
+    <BottomSheet
+      isOpen={isOpen}
+      onClose={onClose}
+      title={collection ? "Edit Koleksi" : "Buat Koleksi Baru"}
+      actions={
+        <>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded transition"
+            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition font-medium text-sm"
+            disabled={loading}
           >
-            <X size={20} className="text-gray-500" />
+            Batal
           </button>
+          <button
+            type="submit"
+            form="collection-form"
+            className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition font-medium text-sm disabled:bg-indigo-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            disabled={loading}
+          >
+            {loading && <Loader size={16} className="animate-spin" />}
+            {collection ? "Simpan" : "Buat Koleksi"}
+          </button>
+        </>
+      }
+    >
+      <form id="collection-form" onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label
+            htmlFor="collectionName"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Nama Koleksi *
+          </label>
+          <input
+            id="collectionName"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Contoh: Proyek Penting"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            required
+          />
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label
-              htmlFor="collectionName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Nama Koleksi *
-            </label>
-            <input
-              id="collectionName"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Proyek Penting"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="collectionDescription"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Deskripsi (opsional)
-            </label>
-            <textarea
-              id="collectionDescription"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Deskripsi singkat koleksi ini"
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+        <div>
+          <label
+            htmlFor="collectionDescription"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Deskripsi (opsional)
+          </label>
+          <textarea
+            id="collectionDescription"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Deskripsi singkat koleksi ini"
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Pilih Icon atau URL Gambar
-            </label>
-            <input
-              type="text"
-              value={customIconUrl}
-              onChange={(e) => setCustomIconUrl(e.target.value)}
-              placeholder="https://example.com/icon.png"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
-            />
-            <div className="grid grid-cols-6 gap-2">
-              {ICONS.map(({ name, icon: Icon }) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => setSelectedIcon(name)}
-                  className={`flex items-center justify-center p-2 rounded-lg border-2 transition hover:bg-gray-50 ${
-                    selectedIcon === name
-                      ? "border-indigo-500 bg-indigo-50"
-                      : "border-gray-200"
-                  }`}
-                  title={name}
-                >
-                  <Icon
-                    size={20}
-                    className={
-                      selectedIcon === name
-                        ? "text-indigo-600"
-                        : "text-gray-600"
-                    }
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Pilih Warna
-            </label>
-            <div className="flex gap-2 flex-wrap">
-              {COLORS.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setSelectedColor(color)}
-                  className={`w-8 h-8 rounded-full border-2 transition hover:scale-110 ${
-                    selectedColor === color
-                      ? "border-gray-900"
-                      : "border-transparent"
-                  }`}
-                  style={{ backgroundColor: color }}
-                  title={color}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Pilih Icon atau URL Gambar
+          </label>
+          <input
+            type="text"
+            value={customIconUrl}
+            onChange={(e) => setCustomIconUrl(e.target.value)}
+            placeholder="https://example.com/icon.png"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
+          />
+          <div className="grid grid-cols-6 gap-2">
+            {ICONS.map(({ name, icon: Icon }) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => setSelectedIcon(name)}
+                className={`flex items-center justify-center p-2 rounded-lg border-2 transition hover:bg-gray-50 ${
+                  selectedIcon === name
+                    ? "border-indigo-500 bg-indigo-50"
+                    : "border-gray-200"
+                }`}
+                title={name}
+              >
+                <Icon
+                  size={20}
+                  className={
+                    selectedIcon === name ? "text-indigo-600" : "text-gray-600"
+                  }
                 />
-              ))}
-            </div>
+              </button>
+            ))}
           </div>
+        </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition font-medium text-sm"
-              disabled={loading}
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition font-medium text-sm disabled:bg-indigo-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              disabled={loading}
-            >
-              {loading && <Loader size={16} className="animate-spin" />}
-              {collection ? "Simpan" : "Buat Koleksi"}
-            </button>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Pilih Warna
+          </label>
+          <div className="flex gap-2 flex-wrap">
+            {COLORS.map((color) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => setSelectedColor(color)}
+                className={`w-8 h-8 rounded-full border-2 transition hover:scale-110 ${
+                  selectedColor === color
+                    ? "border-gray-900"
+                    : "border-transparent"
+                }`}
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            ))}
           </div>
-        </form>
-      </motion.div>
-    </motion.div>
+        </div>
+      </form>
+    </BottomSheet>
   );
 };
